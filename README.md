@@ -1,206 +1,238 @@
-# Algorithm: Authentication Type A using Hill Cipher and Keyed Hash
-
----
-
-## Hill Cipher
-
-### Key Matrix Used
-
-```
-[ 6  24  1 ]
-[13 16 10 ]
-[20 17 15 ]
-```
-
-### Reason for Choosing This Matrix
-
-* The determinant of this matrix is **non-zero**
-* It satisfies the condition:
-
-```
-gcd(det, 26) = 1
-```
-
-* Hence, the matrix is **invertible modulo 26**
-* This ensures that **decryption is possible**
-
----
-
-### Encryption Formula
-
-```
-C = (K × P) mod 26
-```
-
-### Decryption Formula
-
-```
-P = (K⁻¹ × C) mod 26
-```
-
----
+# Hill Cipher with Hash-Based Integrity Verification
 
 ## Overview
 
-This algorithm implements a secure communication system using:
+This project implements the **Hill Cipher (3×3 matrix)** along with a **custom hashing mechanism** to ensure both **confidentiality** and **integrity** of the message.
 
-* **Authentication Type A (Authenticate-then-Encrypt)**
-* **Custom Keyed Hash Function**
-* **Hill Cipher (3×3 matrix)**
+* **Encryption/Decryption:** Hill Cipher (classical symmetric cipher)
+* **Hashing:** Custom double polynomial rolling hash
+* **Pipeline:** Encrypt → Hash → Append → Encrypt → Decrypt → Verify
 
 ---
 
-## Authentication Type A
+## Theory
 
-### Flow
+### Hill Cipher
 
-```id="j8r1y9"
-M → H(M) → (M || H(M)) → Encrypt → Ciphertext
+The Hill Cipher is a **polygraphic substitution cipher** based on **linear algebra**.
+
+* Each letter is mapped:
+
+  ```
+  A → 0, B → 1, ..., Z → 25
+  ```
+* A block of size **n (here n = 3)** is taken.
+* Encryption is done using matrix multiplication:
+
+[
+C = K \cdot P \mod 26
+]
+
+Where:
+
+* ( C ) = Cipher vector
+* ( K ) = Key matrix (3×3)
+* ( P ) = Plaintext vector
+
+Decryption uses the **inverse of the key matrix**:
+
+[
+P = K^{-1} \cdot C \mod 26
+]
+
+The key matrix must be **invertible mod 26**.
+
+---
+
+### Hash Function (Custom)
+
+This project uses a **double polynomial rolling hash**:
+
+* Two hash values are computed:
+
+  ```
+  hash1 = (hash1 * p1 + c) % mod1
+  hash2 = (hash2 * p2 + c) % mod2
+  ```
+
+* Constants used:
+
+  * ( p1 = 131 ), ( mod1 = 10^9 + 7 )
+  * ( p2 = 137 ), ( mod2 = 10^9 + 9 )
+
+### Why this hash?
+
+* Reduces collision probability (double hashing)
+* Efficient (O(n))
+* Easy to implement from scratch (meets constraint)
+* No external libraries used
+
+---
+
+### Why Encode Hash into A–Z?
+
+Hill Cipher only supports **alphabetic input (A–Z)**.
+
+So:
+
+* The numeric hash is converted into an **A–Z string**
+* Each character is mapped using:
+
+  ```
+  encoded_char = 'A' + (ASCII_value % 26)
+  ```
+
+This ensures:
+
+* Compatibility with Hill Cipher
+* Deterministic encoding (same input → same output)
+
+---
+
+## How It Works
+
+### Sender Side
+
+1. Clean message (keep only A–Z)
+2. Compute hash of message + key
+3. Encode hash into A–Z format
+4. Append hash to message
+5. Pad with 'X' to make length multiple of 3
+6. Encrypt using Hill Cipher
+
+---
+
+### Receiver Side
+
+1. Decrypt ciphertext
+2. Extract original message
+3. Extract encoded hash
+4. Recompute hash from extracted message
+5. Encode recomputed hash
+6. Compare both hashes
+
+---
+
+### Integrity Check
+
 ```
-
-At receiver:
-
-```id="3mqm0x"
-Ciphertext → Decrypt → (M || H(M)) → Split → Verify
-```
-
----
-
-## ⚙️ Algorithm Steps
-
----
-
-## 🔹 Sender Side
-
-### Step 1: Input Message
-
-* Take plaintext message `M`
-
----
-
-### Step 2: Compute Keyed Hash
-
-Use:
-
-```id="fxf0a9"
-hash = (hash * 31 + ASCII(c)) mod 100000
-```
-
-* Initialize `hash = secret_key`
-* Process each character of message
-
----
-
-### Step 3: Concatenate Message and Hash
-
-```id="0b7nzb"
-Combined = M || H(M)
-```
-
----
-
-### Step 4: Convert Hash to Alphabet (A–J Mapping)
-
-Since Hill Cipher only supports letters:
-
-| Digit | Letter |
-| ----- | ------ |
-| 0–9   | A–J    |
-
----
-
-### Step 5: Padding
-
-Ensure length is multiple of 3:
-
-```id="7v7q5r"
-If length % 3 ≠ 0 → add 'X'
-```
-
----
-
-### Step 6: Hill Cipher Encryption
-
-* Split into blocks of size 3
-* Convert letters to numbers (A=0 to Z=25)
-* Apply:
-
-```id="p4rj9y"
-C = (K × P) mod 26
-```
-
-* Convert result back to letters
-
----
-
-## 🔹 Receiver Side
-
----
-
-### Step 7: Decryption
-
-Apply inverse matrix:
-
-```id="9f8x6k"
-P = (K⁻¹ × C) mod 26
-```
-
----
-
-### Step 8: Separate Message and Hash
-
-```id="zv0x4m"
-Extract:
-Message = first part
-Hash = remaining part
-```
-
----
-
-### Step 9: Convert A–J back to Digits
-
-```id="k9u2r1"
-A–J → 0–9
+If recomputed_hash == extracted_hash → Verified
+Else → Tampered
 ```
 
 ---
 
-### Step 10: Recompute Hash
+## How to Run
 
-```id="c2v5w7"
-NewHash = H(M)
+### Compile
+
+```
+g++ main.cpp -o hill
+```
+
+### Execute
+
+```
+./hill
+```
+
+### Input
+
+* Enter message (alphabets preferred)
+* Enter secret key (string)
+
+---
+
+## Worked Examples
+
+### Example 1
+
+**Input:**
+
+```
+Message: HELLO
+Key: abc
+```
+
+**Process:**
+
+* Cleaned message → HELLO
+* Hash computed → (h1, h2)
+* Encoded hash → ABCXYZ...
+* Combined → HELLOABCXYZ...
+* Encrypted → Ciphertext
+
+**Output:**
+
+```
+Integrity Verified
 ```
 
 ---
 
-### Step 11: Verification
+### Example 2
 
-```id="r8t6p3"
-If ExtractedHash == NewHash:
-    Message is Authentic
-Else:
-    Message is Tampered
+**Input:**
+
+```
+Message: DIVYA
+Key: e
+```
+
+**Output:**
+
+```
+Combined: DIVYA<encoded_hash>
+Ciphertext: XXXXXXXXX
+Decrypted: DIVYA<encoded_hash>
+Integrity Verified
 ```
 
 ---
 
-## Key Components
+## Test Script (Round-Trip)
 
-| Component     | Role               |
-| ------------- | ------------------ |
-| Hash Function | Integrity          |
-| Secret Key    | Authentication     |
-| Hill Cipher   | Confidentiality    |
-| A–J Mapping   | Data compatibility |
+The program itself demonstrates:
+
+```
+Encrypt → Hash → Append → Encrypt
+Decrypt → Extract → Re-hash → Compare
+```
+
+This ensures:
+
+* Correct decryption
+* Integrity verification
 
 ---
 
-## Conclusion
 
-This algorithm ensures:
+---
 
-* Secure encryption of data
-* Verification of message integrity
-* Detection of any unauthorized modifications
+## Assumptions
+
+* Only uppercase letters (A–Z) are used in encryption
+* Non-alphabet characters are removed
+* Fixed 3×3 key matrix is used
+* Inverse matrix is precomputed
+
+---
+
+
+
+## 🏁 Conclusion
+
+This project successfully demonstrates:
+
+* Classical encryption using Hill Cipher
+* Custom hashing for integrity
+* Secure message transmission with verification
+
+---
+
+## Author
+
+* Name: *Divyadharshini R*
+* Roll Number: *23011102026*
 
 ---
