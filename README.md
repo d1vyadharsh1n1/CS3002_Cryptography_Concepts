@@ -1,12 +1,33 @@
 # Hill Cipher with Hash-Based Integrity Verification
 
+> **Course Assignment** — Classical Cipher Implementation with Custom Hashing
+> **Student:** Divyadharshini R &nbsp;|&nbsp; **Roll No:** 23011102026
+
+---
+
+## Table of Contents
+
+1. [Overview](#overview)
+2. [Theory](#theory)
+   - [Hill Cipher](#hill-cipher)
+   - [Custom Hash Function](#custom-hash-function)
+   - [Hash Encoding Strategy](#hash-encoding-strategy)
+3. [Pipeline](#pipeline)
+4. [How to Run](#how-to-run)
+5. [Worked Examples](#worked-examples)
+6. [Design Decisions & Constraints](#design-decisions--constraints)
+
+---
+
 ## Overview
 
-This project implements the **Hill Cipher (3×3 matrix)** along with a **custom hashing mechanism** to ensure both **confidentiality** and **integrity** of the message.
+This project implements:
 
-* **Encryption/Decryption:** Hill Cipher (classical symmetric cipher)
-* **Hashing:** Custom double polynomial rolling hash
-* **Pipeline:** Encrypt → Hash → Append → Encrypt → Decrypt → Verify
+- **Encryption / Decryption** — Hill Cipher using a 3×3 key matrix
+- **Integrity Verification** — Custom double polynomial rolling hash
+- **Full Pipeline** — Encrypt → Hash → Append → Encrypt → Decrypt → Verify
+
+The system guarantees both **confidentiality** (via Hill Cipher) and **integrity** (via hash comparison), simulating a basic authenticated encryption workflow.
 
 ---
 
@@ -14,132 +35,166 @@ This project implements the **Hill Cipher (3×3 matrix)** along with a **custom 
 
 ### Hill Cipher
 
-The Hill Cipher is a **polygraphic substitution cipher** based on **linear algebra**.
+The Hill Cipher is a **polygraphic substitution cipher** grounded in linear algebra. Unlike monoalphabetic ciphers, it encrypts multiple letters simultaneously, making frequency analysis significantly harder.
 
-* Each letter is mapped:
+**Letter Mapping:**
+```
+A → 0,  B → 1,  C → 2,  ...  Z → 25
+```
 
-  ```
-  A → 0, B → 1, ..., Z → 25
-  ```
-* A block of size **n (here n = 3)** is taken.
-* Encryption is done using matrix multiplication:
+**Encryption** — A plaintext block of size *n* (here *n* = 3) is multiplied by the key matrix *K*:
 
-[
-C = K ⋅ P (mod26)
-]
+```
+C = K · P  (mod 26)
+```
 
-Where:
+| Symbol | Meaning |
+|--------|---------|
+| `C` | Ciphertext vector (3×1) |
+| `K` | Key matrix (3×3) |
+| `P` | Plaintext vector (3×1) |
 
-* ( C ) = Cipher vector
-* ( K ) = Key matrix (3×3)
-* ( P ) = Plaintext vector
+**Decryption** uses the modular inverse of the key matrix:
 
-Decryption uses the **inverse of the key matrix**:
+```
+P = K⁻¹ · C  (mod 26)
+```
 
-[
-P = K^{-1} ⋅ C (mod26)
-]
-
-The key matrix must be **invertible mod 26**.
-
----
-
-### Hash Function (Custom)
-
-This project uses a **double polynomial rolling hash**:
-
-* Two hash values are computed:
-
-  ```
-  hash1 = (hash1 * p1 + c) % mod1
-  hash2 = (hash2 * p2 + c) % mod2
-  ```
-
-* Constants used:
-
-  * ( p1 = 131 ), ( mod1 = 10^9 + 7 )
-  * ( p2 = 137 ), ( mod2 = 10^9 + 9 )
-
-### Why this hash?
-
-* Reduces collision probability (double hashing)
-* Efficient (O(n))
-* Easy to implement from scratch (meets constraint)
-* No external libraries used
+> **Requirement:** The key matrix *K* must be invertible mod 26 — i.e., `det(K)` must be coprime with 26.
 
 ---
 
-### Why Encode Hash into A–Z?
+### Custom Hash Function
 
-Hill Cipher only supports **alphabetic input (A–Z)**.
+This project uses a **double polynomial rolling hash** — implemented entirely from scratch without any cryptographic libraries.
 
-So:
+**Algorithm:**
 
-* The numeric hash is converted into an **A–Z string**
-* Each character is mapped using:
+```
+hash1 = (hash1 × p1 + c) mod mod1
+hash2 = (hash2 × p2 + c) mod mod2
+```
 
-  ```
-  encoded_char = 'A' + (ASCII_value % 26)
-  ```
+**Constants:**
+
+| Parameter | Value |
+|-----------|-------|
+| `p1` | 131 |
+| `mod1` | 10⁹ + 7 (prime) |
+| `p2` | 137 |
+| `mod2` | 10⁹ + 9 (prime) |
+
+**Why this hash?**
+
+| Property | Explanation |
+|----------|-------------|
+| **Low collision probability** | Two independent hashes must both collide simultaneously — probability ≈ 1/(10⁹ × 10⁹) |
+| **Linear time** | O(n) computation over the message |
+| **Deterministic** | Same message + key always yields the same hash |
+| **Distinct** | Double polynomial rolling hash with the specific prime pair (131, 137) is a unique combination. |
+
+---
+
+### Hash Encoding Strategy
+
+The Hill Cipher operates exclusively on **alphabetic characters (A–Z)**. Raw numeric hash values cannot be encrypted directly.
+
+**Solution — Encode each byte of the hash into A–Z:**
+
+```
+encoded_char = 'A' + (digit % 26)
+```
 
 This ensures:
-
-* Compatibility with Hill Cipher
-* Deterministic encoding (same input → same output)
+- Full compatibility with the Hill Cipher input format
+- Deterministic, reversible encoding
+- No loss of distinguishability (same input always produces the same encoded hash)
 
 ---
 
-## How It Works
+## Pipeline
 
 ### Sender Side
 
-1. Clean message (keep only A–Z)
-2. Compute hash of message + key
-3. Encode hash into A–Z format
-4. Append hash to message
-5. Pad with 'X' to make length multiple of 3
-6. Encrypt using Hill Cipher
-
----
+```
+Original Message
+      │
+      ▼
+ Remove non-alpha characters (keep A–Z only)
+      │
+      ▼
+ Compute double rolling hash(message + key)
+      │
+      ▼
+ Encode hash → A–Z string
+      │
+      ▼
+ Append encoded hash to cleaned message
+      │
+      ▼
+ Pad with 'X' to make length a multiple of 3
+      │
+      ▼
+ Encrypt with Hill Cipher (3×3 key matrix)
+      │
+      ▼
+   Ciphertext
+```
 
 ### Receiver Side
 
-1. Decrypt ciphertext
-2. Extract original message
-3. Extract encoded hash
-4. Recompute hash from extracted message
-5. Encode recomputed hash
-6. Compare both hashes
-
----
-
-### Integrity Check
-
 ```
-If recomputed_hash == extracted_hash → Verified
-Else → Tampered
+   Ciphertext
+      │
+      ▼
+ Decrypt with Hill Cipher (K⁻¹ mod 26)
+      │
+      ▼
+ Split → [Original Message] + [Extracted Hash]
+      │
+      ▼
+ Recompute hash from extracted message + key
+      │
+      ▼
+ Encode recomputed hash → A–Z string
+      │
+      ▼
+ Compare: extracted hash == recomputed hash?
+      │
+   ┌──┴──┐
+  YES    NO
+   │      │
+Verified  Tampered 
 ```
 
 ---
 
 ## How to Run
 
+### Prerequisites
+
+- A C++ compiler supporting C++11 or later (e.g., `g++`)
+
 ### Compile
 
-```
+```bash
 g++ main.cpp -o hill
 ```
 
 ### Execute
 
-```
+```bash
 ./hill
 ```
 
-### Input
+### Input Format
 
-* Enter message (alphabets preferred)
-* Enter secret key (string)
+```
+Enter message : <your message, alphabets preferred>
+Enter secret key : <any string — used to seed the hash>
+```
+
+> Non-alphabetic characters in the message are automatically removed before processing.
 
 ---
 
@@ -148,24 +203,24 @@ g++ main.cpp -o hill
 ### Example 1
 
 **Input:**
-
 ```
-Message: HELLO
-Key: abc
+Message : HELLO
+Key     : abc
 ```
 
-**Process:**
+**Step-by-step:**
 
-* Cleaned message → HELLO
-* Hash computed → (h1, h2)
-* Encoded hash → ABCXYZ...
-* Combined → HELLOABCXYZ...
-* Encrypted → Ciphertext
+| Step | Value |
+|------|-------|
+| Cleaned message | `HELLO` |
+| Hash computed | `(h1, h2)` over `HELLO` + `abc` |
+| Encoded hash | e.g., `BCFMQT` (A–Z representation) |
+| Combined string | `HELLOBCFMQT` → padded to multiple of 3 |
+| Encrypted | Ciphertext block(s) |
 
 **Output:**
-
 ```
-Integrity Verified
+Integrity Verified ✓
 ```
 
 ---
@@ -173,66 +228,41 @@ Integrity Verified
 ### Example 2
 
 **Input:**
-
 ```
-Message: DIVYA
-Key: e
+Message : DIVYA
+Key     : e
 ```
 
 **Output:**
-
 ```
-Combined: DIVYA<encoded_hash>
-Ciphertext: XXXXXXXXX
-Decrypted: DIVYA<encoded_hash>
-Integrity Verified
-```
+Combined  : DIVYA<encoded_hash>
+Ciphertext: XXXXXXXXXXXXXXXXX
+Decrypted : DIVYA<encoded_hash>
 
----
-
-## Test Script (Round-Trip)
-
-The program itself demonstrates:
-
-```
-Encrypt → Hash → Append → Encrypt
-Decrypt → Extract → Re-hash → Compare
+Integrity Verified 
 ```
 
-This ensures:
-
-* Correct decryption
-* Integrity verification
+The decrypted text matches the original combined string, and the re-computed hash matches the extracted hash — confirming both correct decryption and message integrity.
 
 ---
 
+## Design Decisions & Constraints
+
+| Constraint | Approach Taken |
+|------------|----------------|
+| No built-in crypto libraries | Double polynomial rolling hash implemented from scratch |
+| Hill Cipher only handles A–Z | Hash encoded into A–Z via modular character mapping |
+| Key matrix must be invertible mod 26 | Fixed 3×3 matrix chosen with valid modular inverse; K⁻¹ precomputed |
+| Unique hash among peers | Double rolling hash with prime pair (131, 137) and dual large-prime moduli |
+
 
 ---
 
-## Assumptions
+## File Structure
 
-* Only uppercase letters (A–Z) are used in encryption
-* Non-alphabet characters are removed
-* Fixed 3×3 key matrix is used
-* Inverse matrix is precomputed
+```
+.
+├── main.cpp       # Full implementation: Hill Cipher + hash + pipeline
+└── README.md      # This file
+```
 
----
-
-
-
-## 🏁 Conclusion
-
-This project successfully demonstrates:
-
-* Classical encryption using Hill Cipher
-* Custom hashing for integrity
-* Secure message transmission with verification
-
----
-
-## Author
-
-* Name: *Divyadharshini R*
-* Roll Number: *23011102026*
-
----
