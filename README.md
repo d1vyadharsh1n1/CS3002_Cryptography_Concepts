@@ -220,7 +220,7 @@ Key     : def
 
 **Output Screenshot:**
 ```
-![Output](output2.png)
+![Output](https://github.com/d1vyadharsh1n1/CS3002_Cryptography_Concepts/blob/main/output1.png)
 
 ```
 
@@ -244,7 +244,7 @@ Integrity Verified
 ```
 **Output Screenshot:**
 ```
-![Output](output1.png)
+![Output](https://github.com/d1vyadharsh1n1/CS3002_Cryptography_Concepts/blob/main/output1.png)
 ```
 
 The decrypted text matches the original combined string, and the re-computed hash matches the extracted hash — confirming both correct decryption and message integrity.
