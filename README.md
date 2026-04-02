@@ -25,7 +25,7 @@ The Hill Cipher is a **polygraphic substitution cipher** based on **linear algeb
 * Encryption is done using matrix multiplication:
 
 [
-C = K \cdot P \mod 26
+C = K ⋅ P (mod26)
 ]
 
 Where:
@@ -37,7 +37,7 @@ Where:
 Decryption uses the **inverse of the key matrix**:
 
 [
-P = K^{-1} \cdot C \mod 26
+P = K^{-1} ⋅ C (mod26)
 ]
 
 The key matrix must be **invertible mod 26**.
