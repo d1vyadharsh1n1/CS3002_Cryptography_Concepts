@@ -220,7 +220,7 @@ Key     : def
 
 **Output Screenshot:**
 ```
-<img width="474" height="219" alt="image" src="https://github.com/user-attachments/assets/76c9962d-4e92-44f2-8f06-97d3286231ca" />
+![Output](output2.png)
 
 ```
 
@@ -244,7 +244,7 @@ Integrity Verified
 ```
 **Output Screenshot:**
 ```
-<img width="453" height="213" alt="image" src="https://github.com/user-attachments/assets/4d7eb30b-5dda-4d1b-896a-2e1b38f29cc2" />
+![Output](output1.png)
 ```
 
 The decrypted text matches the original combined string, and the re-computed hash matches the extracted hash — confirming both correct decryption and message integrity.
