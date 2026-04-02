@@ -219,10 +219,9 @@ Key     : def
 | Encrypted | Ciphertext block(s) |
 
 **Output Screenshot:**
-```
+
 ![Output](https://github.com/d1vyadharsh1n1/CS3002_Cryptography_Concepts/blob/main/output1.png)
 
-```
 
 ---
 
@@ -243,9 +242,9 @@ Decrypted : DIVYA<encoded_hash>
 Integrity Verified 
 ```
 **Output Screenshot:**
-```
+
 ![Output](https://github.com/d1vyadharsh1n1/CS3002_Cryptography_Concepts/blob/main/output1.png)
-```
+
 
 The decrypted text matches the original combined string, and the re-computed hash matches the extracted hash — confirming both correct decryption and message integrity.
 
