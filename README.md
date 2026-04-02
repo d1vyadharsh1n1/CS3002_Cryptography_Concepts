@@ -266,7 +266,7 @@ The decrypted text matches the original combined string, and the re-computed has
 
 ```
 .
-├── main.cpp       # Full implementation: Hill Cipher + hash + pipeline
+├── main.cpp       # Full implementation: Hill Cipher + hash + pipeline + test_script
 └── README.md      # This file
 ```
 
