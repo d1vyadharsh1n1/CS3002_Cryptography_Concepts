@@ -191,7 +191,7 @@ g++ main.cpp -o hill
 
 ```
 Enter message : <your message, alphabets preferred>
-Enter secret key : <any string — used to seed the hash>
+Enter secret key : <any string>
 ```
 
 > Non-alphabetic characters in the message are automatically removed before processing.
@@ -205,7 +205,7 @@ Enter secret key : <any string — used to seed the hash>
 **Input:**
 ```
 Message : HELLO
-Key     : abc
+Key     : def
 ```
 
 **Step-by-step:**
@@ -218,9 +218,10 @@ Key     : abc
 | Combined string | `HELLOBCFMQT` → padded to multiple of 3 |
 | Encrypted | Ciphertext block(s) |
 
-**Output:**
+**Output Screenshot:**
 ```
-Integrity Verified ✓
+<img width="474" height="219" alt="image" src="https://github.com/user-attachments/assets/76c9962d-4e92-44f2-8f06-97d3286231ca" />
+
 ```
 
 ---
@@ -230,7 +231,7 @@ Integrity Verified ✓
 **Input:**
 ```
 Message : DIVYA
-Key     : e
+Key     : abc
 ```
 
 **Output:**
@@ -240,6 +241,10 @@ Ciphertext: XXXXXXXXXXXXXXXXX
 Decrypted : DIVYA<encoded_hash>
 
 Integrity Verified 
+```
+**Output Screenshot:**
+```
+<img width="453" height="213" alt="image" src="https://github.com/user-attachments/assets/4d7eb30b-5dda-4d1b-896a-2e1b38f29cc2" />
 ```
 
 The decrypted text matches the original combined string, and the re-computed hash matches the extracted hash — confirming both correct decryption and message integrity.
